@@ -6,7 +6,6 @@
     <title>Fish Feeder Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
     <style>
-        /* Styling umum */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -66,6 +65,9 @@
         .exit-btn {
             background-color: red;
         }
+        .device-btns {
+            margin: 20px;
+        }
     </style>
 </head>
 <body>
@@ -86,9 +88,12 @@
         <div>
             <h1>Control Dashboard</h1>
             <div id="lcd">Virtual OLED Display</div>
+            
+            <!-- Manual Feed Control -->
             <button id="manualControl">Manual Feed</button>
             <button id="autoControl">Automatic Feed</button>
-            
+
+            <!-- Time Picker -->
             <div class="time-picker">
                 <h2>Set Feeding Schedule</h2>
                 <label>Time 1: <input type="time" id="time1" value="08:00"></label>
@@ -96,6 +101,17 @@
                 <label>Time 3: <input type="time" id="time3" value="17:00"></label>
                 <button id="updateSchedule">Update Schedule</button>
             </div>
+            
+            <!-- Control Other Devices -->
+            <div class="device-btns">
+                <button id="deviceOn">Turn Device ON</button>
+                <button id="deviceOff">Turn Device OFF</button>
+            </div>
+            
+            <!-- Status Logs -->
+            <h2>System Logs</h2>
+            <div id="systemLogs">No errors</div>
+            
             <button class="exit-btn" id="exitBtn">Exit</button>
         </div>
     </div>
@@ -109,6 +125,7 @@
         let client;
         const screen1 = document.getElementById('screen1');
         const screen2 = document.getElementById('screen2');
+        const systemLogs = document.getElementById('systemLogs');
 
         document.getElementById('connectBtn').addEventListener('click', () => {
             const wifiName = document.getElementById('wifiName').value;
@@ -141,12 +158,22 @@
                 console.log('Connected to MQTT Broker');
                 client.subscribe('servo/control', { qos: 1 });
                 client.subscribe('servo/schedule', { qos: 1 });
+                client.subscribe('device/control', { qos: 1 });
+                client.subscribe('servo/status', { qos: 1 });
+                client.subscribe('device/status', { qos: 1 });
+                client.subscribe('servo/error', { qos: 1 });
+                client.subscribe('system/logs', { qos: 1 });
+                client.subscribe('device/reboot', { qos: 1 });
                 document.getElementById('lcd').innerText = 'Connected to MQTT';
             });
 
             client.on('message', (topic, message) => {
                 console.log('Message received:', topic, message.toString());
                 document.getElementById('lcd').innerText = `Topic: ${topic}\nMessage: ${message}`;
+
+                if (topic === 'system/logs') {
+                    systemLogs.innerText = message.toString(); // Update system logs
+                }
             });
         }
 
@@ -171,7 +198,15 @@
             client.publish('servo/schedule', JSON.stringify(schedule), { qos: 1 });
             document.getElementById('lcd').innerText = 'Schedule Updated';
         });
+
+        document.getElementById('deviceOn').addEventListener('click', () => {
+            client.publish('device/control', 'ON', { qos: 1 });
+        });
+
+        document.getElementById('deviceOff').addEventListener('click', () => {
+            client.publish('device/control', 'OFF', { qos: 1 });
+        });
     </script>
 
 </body>
-</
+</html>
