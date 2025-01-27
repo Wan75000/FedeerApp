@@ -3,210 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fish Feeder Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
+    <title>Fish Fedeer Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        .screen {
-            display: none;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(to bottom, white, navy);
-            color: white;
+            margin: 20px;
             text-align: center;
         }
-        .screen.active {
-            display: flex;
-        }
-        h1 {
-            color: navy;
-        }
-        button {
-            background-color: navy;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            margin: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        input {
-            padding: 10px;
-            margin: 10px 0;
-            width: 80%;
-            border: 1px solid navy;
-            border-radius: 5px;
-        }
+
         #lcd {
-            font-family: 'Courier New', monospace;
-            font-size: 20px;
-            padding: 20px;
-            background: black;
-            color: green;
-            border-radius: 10px;
-            margin: 20px 0;
-            width: 80%;
+            font-size: 24px;
+            margin-bottom: 20px;
         }
-        .time-picker {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .time-picker label {
-            color: navy;
+
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            font-size: 16px;
+            cursor: pointer;
             margin: 5px;
+            border-radius: 8px;
         }
-        .exit-btn {
-            background-color: red;
+
+        .button:hover {
+            background-color: #45a049;
         }
-        .device-btns {
-            margin: 20px;
+
+        .schedule {
+            margin-top: 20px;
         }
     </style>
-</head>
-<body>
-
-    <!-- Screen 1: Login WiFi -->
-    <div id="screen1" class="screen active">
-        <div>
-            <h1>Fish Feeder Dashboard</h1>
-            <p>Enter WiFi credentials to connect:</p>
-            <input type="text" id="wifiName" placeholder="WiFi Name">
-            <input type="password" id="wifiPassword" placeholder="WiFi Password">
-            <button id="connectBtn">Connect</button>
-        </div>
-    </div>
-
-    <!-- Screen 2: Dashboard -->
-    <div id="screen2" class="screen">
-        <div>
-            <h1>Control Dashboard</h1>
-            <div id="lcd">Virtual OLED Display</div>
-            
-            <!-- Manual Feed Control -->
-            <button id="manualControl">Manual Feed</button>
-            <button id="autoControl">Automatic Feed</button>
-
-            <!-- Time Picker -->
-            <div class="time-picker">
-                <h2>Set Feeding Schedule</h2>
-                <label>Time 1: <input type="time" id="time1" value="08:00"></label>
-                <label>Time 2: <input type="time" id="time2" value="12:00"></label>
-                <label>Time 3: <input type="time" id="time3" value="17:00"></label>
-                <button id="updateSchedule">Update Schedule</button>
-            </div>
-            
-            <!-- Control Other Devices -->
-            <div class="device-btns">
-                <button id="deviceOn">Turn Device ON</button>
-                <button id="deviceOff">Turn Device OFF</button>
-            </div>
-            
-            <!-- Status Logs -->
-            <h2>System Logs</h2>
-            <div id="systemLogs">No errors</div>
-            
-            <button class="exit-btn" id="exitBtn">Exit</button>
-        </div>
-    </div>
-
     <script>
-        const brokerUrl = 'wss://8cb15def763044589905db3abee4c47d.s1.eu.hivemq.cloud:8884/mqtt'; 
-        const clientId = 'web_dashboard_client';
-        const username = 'hivemq.webclient.1737922294562';
-        const password = 'r3z:qeG1DV$ab09MQ*;P';
+        // WebSocket untuk koneksi otomatis ke NodeMCU
+        let socket;
+        const IP_ADDRESS = "ws://fishfeeder.local:81";  // Menggunakan mDNS untuk alamat IP NodeMCU
 
-        let client;
-        const screen1 = document.getElementById('screen1');
-        const screen2 = document.getElementById('screen2');
-        const systemLogs = document.getElementById('systemLogs');
+        // Fungsi untuk menghubungkan ke WebSocket
+        function connectWebSocket() {
+            socket = new WebSocket(IP_ADDRESS);
 
-        document.getElementById('connectBtn').addEventListener('click', () => {
-            const wifiName = document.getElementById('wifiName').value;
-            const wifiPassword = document.getElementById('wifiPassword').value;
+            socket.onopen = function() {
+                console.log("Connected to NodeMCU WebSocket");
+            };
 
-            if (wifiName && wifiPassword) {
-                connectMQTT();
-                screen1.classList.remove('active');
-                screen2.classList.add('active');
-            } else {
-                alert('Please enter WiFi credentials!');
-            }
-        });
+            socket.onmessage = function(event) {
+                console.log("Received message:", event.data);
+                // Menampilkan alamat IP NodeMCU yang diterima
+                document.getElementById('lcd').innerText = "NodeMCU IP: " + event.data;
+            };
 
-        document.getElementById('exitBtn').addEventListener('click', () => {
-            screen2.classList.remove('active');
-            screen1.classList.add('active');
-        });
-
-        function connectMQTT() {
-            client = mqtt.connect(brokerUrl, {
-                clientId: clientId,
-                username: username,
-                password: password,
-                clean: true,
-                reconnectPeriod: 1000
-            });
-
-            client.on('connect', () => {
-                console.log('Connected to MQTT Broker');
-                client.subscribe('servo/control', { qos: 1 });
-                client.subscribe('servo/schedule', { qos: 1 });
-                client.subscribe('device/control', { qos: 1 });
-                client.subscribe('servo/status', { qos: 1 });
-                client.subscribe('device/status', { qos: 1 });
-                client.subscribe('servo/error', { qos: 1 });
-                client.subscribe('system/logs', { qos: 1 });
-                client.subscribe('device/reboot', { qos: 1 });
-                document.getElementById('lcd').innerText = 'Connected to MQTT';
-            });
-
-            client.on('message', (topic, message) => {
-                console.log('Message received:', topic, message.toString());
-                document.getElementById('lcd').innerText = `Topic: ${topic}\nMessage: ${message}`;
-
-                if (topic === 'system/logs') {
-                    systemLogs.innerText = message.toString(); // Update system logs
-                }
-            });
+            socket.onerror = function(error) {
+                console.error("WebSocket Error:", error);
+            };
         }
 
-        document.getElementById('manualControl').addEventListener('click', () => {
-            client.publish('servo/control', 'ON', { qos: 1 });
-            document.getElementById('lcd').innerText = 'Manual Feed Activated';
-        });
+        // Fungsi untuk mengirimkan permintaan feed manual ke NodeMCU
+        function sendManualFeed() {
+            fetch("/manualFeed", {
+                method: "POST",
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => alert("Error: " + error));
+        }
 
-        document.getElementById('autoControl').addEventListener('click', () => {
-            client.publish('servo/control', 'AUTO', { qos: 1 });
-            document.getElementById('lcd').innerText = 'Automatic Feed Activated';
-        });
+        // Fungsi untuk mengatur jadwal pemberian makan
+        function setSchedule() {
+            const time1 = document.getElementById("time1").value;
+            const time2 = document.getElementById("time2").value;
+            const time3 = document.getElementById("time3").value;
 
-        document.getElementById('updateSchedule').addEventListener('click', () => {
-            const schedule = {
-                schedule: [
-                    document.getElementById('time1').value,
-                    document.getElementById('time2').value,
-                    document.getElementById('time3').value
-                ]
-            };
-            client.publish('servo/schedule', JSON.stringify(schedule), { qos: 1 });
-            document.getElementById('lcd').innerText = 'Schedule Updated';
-        });
+            fetch("/setSchedule", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `time1=${time1}&time2=${time2}&time3=${time3}`
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => alert("Error: " + error));
+        }
 
-        document.getElementById('deviceOn').addEventListener('click', () => {
-            client.publish('device/control', 'ON', { qos: 1 });
-        });
+        // Fungsi untuk me-reboot NodeMCU
+        function rebootDevice() {
+            fetch("/reboot", {
+                method: "POST",
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => alert("Error: " + error));
+        }
 
-        document.getElementById('deviceOff').addEventListener('click', () => {
-            client.publish('device/control', 'OFF', { qos: 1 });
-        });
+        window.onload = connectWebSocket;  // Koneksi WebSocket saat halaman dimuat
     </script>
+</head>
+<body>
+    <h1>Fish Fedeer Dashboard</h1>
+    <div id="lcd">Waiting for NodeMCU IP...</div>
 
+    <!-- Tombol untuk memberi makan secara manual -->
+    <button class="button" onclick="sendManualFeed()">Manual Feed</button>
+
+    <div class="schedule">
+        <h2>Set Feeding Schedule</h2>
+        <form onsubmit="event.preventDefault(); setSchedule();">
+            <label for="time1">Time 1:</label>
+            <input type="time" id="time1" required><br><br>
+
+            <label for="time2">Time 2:</label>
+            <input type="time" id="time2" required><br><br>
+
+            <label for="time3">Time 3:</label>
+            <input type="time" id="time3" required><br><br>
+
+            <button class="button" type="submit">Set Schedule</button>
+        </form>
+    </div>
+
+    <!-- Tombol untuk me-reboot perangkat NodeMCU -->
+    <br><br>
+    <button class="button" onclick="rebootDevice()">Reboot Device</button>
 </body>
 </html>
