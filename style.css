@@ -1,24 +1,121 @@
-/* Styling dashboard */
-body { 
-    font-family: Arial, sans-serif; 
+/* General Styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: white;
+    background-size: cover;
+    background-position: center;
 }
 
-h1 { 
-    text-align: center; 
-    color: navy; 
+h1, h2 {
+    text-align: center;
+    color: navy;
+    margin: 20px 0;
 }
 
-#status { 
-    text-align: center; 
-    font-size: 20px; 
+.container {
+    display: none;
+    padding: 20px;
 }
 
-button { 
-    background-color: navy; 
-    color: white; 
-    padding: 10px 20px; 
-    margin: 10px; 
-    cursor: pointer; 
-    border: none;
+.form-group {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    padding: 10px;
     font-size: 16px;
+    width: 80%;
+    margin: auto;
+    display: block;
+    border: 1px solid navy;
+    border-radius: 5px;
+}
+
+/* Buttons */
+.buttons {
+    text-align: center;
+    margin-top: 20px;
+}
+
+button {
+    background-color: navy;
+    color: white;
+    padding: 10px 20px;
+    margin: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #004080;
+}
+
+/* LCD Display */
+#lcd {
+    width: 90%;
+    height: 100px;
+    margin: 20px auto;
+    background-color: #001f3f;
+    color: white;
+    text-align: center;
+    line-height: 100px;
+    border-radius: 10px;
+    font-size: 20px;
+    font-family: "Courier New", monospace;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Time Picker */
+#time-picker input {
+    padding: 10px;
+    font-size: 16px;
+    width: 100px;
+    margin: 5px auto;
+    display: block;
+    border: 1px solid navy;
+    border-radius: 5px;
+    text-align: center;
+}
+
+#time-picker {
+    text-align: center;
+}
+
+/* Background Upload Section */
+#background-upload {
+    margin-top: 20px;
+    text-align: center;
+}
+
+#background-upload h2 {
+    margin-bottom: 10px;
+}
+
+#background-upload input[type="file"] {
+    padding: 10px;
+    border: 1px solid navy;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+}
+
+/* Exit Button */
+#exitBtn {
+    background-color: red;
+}
+
+#exitBtn:hover {
+    background-color: darkred;
 }
