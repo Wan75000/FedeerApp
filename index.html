@@ -4,18 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fish Feeder Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
             text-align: center;
+        }
+
+        h1 {
+            color: #1a73e8;
+            margin-top: 20px;
         }
 
         #lcd {
             font-size: 24px;
             margin-bottom: 20px;
+            color: #333;
         }
 
         .button {
@@ -37,59 +43,116 @@
             margin-top: 20px;
         }
 
+        input[type="time"] {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+
         .exit-btn {
-            background-color: red;
-            padding: 15px 32px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 8px;
+            background-color: #f44336;
         }
 
         .exit-btn:hover {
-            background-color: #e33e3e;
+            background-color: #e53935;
+        }
+
+        .container {
+            padding: 20px;
         }
     </style>
+    <script>
+        // WebSocket untuk koneksi otomatis ke NodeMCU
+        let socket;
+        const IP_ADDRESS = "ws://fishfeeder.local:81";  // Menggunakan mDNS untuk alamat IP NodeMCU
+
+        // Fungsi untuk menghubungkan ke WebSocket
+        function connectWebSocket() {
+            socket = new WebSocket(IP_ADDRESS);
+
+            socket.onopen = function() {
+                console.log("Connected to NodeMCU WebSocket");
+            };
+
+            socket.onmessage = function(event) {
+                console.log("Received message:", event.data);
+                // Menampilkan alamat IP NodeMCU yang diterima
+                document.getElementById('lcd').innerText = "NodeMCU IP: " + event.data;
+            };
+
+            socket.onerror = function(error) {
+                console.error("WebSocket Error:", error);
+            };
+        }
+
+        // Fungsi untuk mengirimkan permintaan feed manual ke NodeMCU
+        function sendManualFeed() {
+            fetch("/manualFeed", {
+                method: "POST",
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => alert("Error: " + error));
+        }
+
+        // Fungsi untuk mengatur jadwal pemberian makan
+        function setSchedule() {
+            const time1 = document.getElementById("time1").value;
+            const time2 = document.getElementById("time2").value;
+            const time3 = document.getElementById("time3").value;
+
+            fetch("/setSchedule", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `time1=${time1}&time2=${time2}&time3=${time3}`
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => alert("Error: " + error));
+        }
+
+        // Fungsi untuk me-reboot NodeMCU
+        function rebootDevice() {
+            fetch("/reboot", {
+                method: "POST",
+            })
+            .then(response => response.text())
+            .then(data => alert(data))
+            .catch(error => alert("Error: " + error));
+        }
+
+        window.onload = connectWebSocket;  // Koneksi WebSocket saat halaman dimuat
+    </script>
 </head>
 <body>
+    <div class="container">
+        <h1>Fish Feeder Dashboard</h1>
+        <div id="lcd">Waiting for NodeMCU IP...</div>
 
-    <h1>Fish Feeder Dashboard</h1>
-    <div id="lcd">Waiting for NodeMCU IP...</div>
+        <!-- Tombol untuk memberi makan secara manual -->
+        <button class="button" onclick="sendManualFeed()">Manual Feed</button>
 
-    <button class="button" id="manualControl">Manual Feed</button>
-    <button class="button" id="autoControl">Automatic Feed</button>
+        <div class="schedule">
+            <h2>Set Feeding Schedule</h2>
+            <form onsubmit="event.preventDefault(); setSchedule();">
+                <label for="time1">Time 1:</label>
+                <input type="time" id="time1" required><br><br>
 
-    <div class="schedule">
-        <h2>Set Feeding Schedule</h2>
-        <label>Time 1: <input type="time" id="time1" value="08:00"></label><br><br>
-        <label>Time 2: <input type="time" id="time2" value="12:00"></label><br><br>
-        <label>Time 3: <input type="time" id="time3" value="17:00"></label><br><br>
-        <button class="button" id="updateSchedule">Update Schedule</button>
+                <label for="time2">Time 2:</label>
+                <input type="time" id="time2" required><br><br>
+
+                <label for="time3">Time 3:</label>
+                <input type="time" id="time3" required><br><br>
+
+                <button class="button" type="submit">Set Schedule</button>
+            </form>
+        </div>
+
+        <!-- Tombol untuk me-reboot perangkat NodeMCU -->
+        <br><br>
+        <button class="button exit-btn" onclick="rebootDevice()">Reboot Device</button>
     </div>
-
-    <br><br>
-    <button class="exit-btn" id="exitBtn">Exit</button>
-
-    <script>
-        // Koneksi WebSocket ke NodeMCU
-        const socket = new WebSocket('ws://fishfeeder.local:81'); // Ganti dengan alamat WebSocket sesuai konfigurasi
-
-        socket.onopen = function() {
-            console.log("Connected to NodeMCU WebSocket");
-        };
-
-        socket.onmessage = function(event) {
-            console.log("Received message:", event.data);
-            document.getElementById('lcd').innerText = "NodeMCU IP: " + event.data;
-        };
-
-        // Mengirimkan kontrol manual feed ke NodeMCU
-        document.getElementById('manualControl').addEventListener('click', function() {
-            fetch('/manualFeed', { method: 'POST' })
-                .then(response => response.text())
-                .then(data => alert(data))
-                .catch(error => alert("Error: " + error));
-        });
-
-        // Mengatur jadwal feeding
-        document.getElementById('updateSchedule').addEventListener('click', function() {
-            const time1 = document.getElementById("
+</body>
+</html>
