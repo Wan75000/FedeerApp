@@ -6,121 +6,188 @@
     <title>Fish Feeder Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
     <style>
+        /* Styling umum */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: white;
+            background-color: #f4f4f4;
         }
-        h1, h2 {
+
+        .screen {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(to bottom, white, navy);
+            color: white;
             text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
             color: navy;
         }
-        .container {
-            display: none;
-            padding: 20px;
-        }
-        #screen1, #screen2 {
-            display: none;
-        }
-        .form-group {
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .form-group label {
-            display: block;
-            font-weight: bold;
-        }
-        .form-group input {
-            padding: 10px;
-            font-size: 16px;
-            width: 80%;
-            margin: auto;
-            display: block;
-        }
-        .buttons {
-            text-align: center;
-            margin-top: 20px;
-        }
+
         button {
             background-color: navy;
             color: white;
             padding: 10px 20px;
-            margin: 10px;
-            font-size: 16px;
-            cursor: pointer;
             border: none;
+            margin: 10px;
+            cursor: pointer;
             border-radius: 5px;
         }
-        button:hover {
-            background-color: #004080;
-        }
-        #lcd {
-            width: 90%;
-            height: 100px;
-            margin: 20px auto;
-            background-color: #001f3f;
-            color: white;
-            text-align: center;
-            line-height: 100px;
-            border-radius: 10px;
-            font-size: 20px;
-            font-family: "Courier New", monospace;
-        }
-        #time-picker input {
+
+        input {
             padding: 10px;
-            font-size: 16px;
-            width: 100px;
-            margin: 5px auto;
+            margin: 10px 0;
+            width: 80%;
+            border: 1px solid navy;
+            border-radius: 5px;
         }
-        #background-upload {
-            margin-top: 20px;
-            text-align: center;
+
+        #lcd {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            padding: 20px;
+            background: black;
+            color: green;
+            border-radius: 10px;
+            margin: 20px 0;
+            width: 80%;
+        }
+
+        .time-picker {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .time-picker label {
+            color: navy;
+            margin: 5px;
+        }
+
+        .exit-btn {
+            background-color: red;
         }
     </style>
 </head>
 <body>
-    <div id="screen1" class="container">
-        <h1>Fish Feeder - Login</h1>
-        <div class="form-group">
-            <label for="username">WiFi Username</label>
-            <input type="text" id="username" placeholder="Enter WiFi Username">
-        </div>
-        <div class="form-group">
-            <label for="password">WiFi Password</label>
-            <input type="password" id="password" placeholder="Enter WiFi Password">
-        </div>
-        <div class="buttons">
+
+    <!-- Screen 1: Login WiFi -->
+    <div id="screen1" class="screen active">
+        <div>
+            <h1>Fish Feeder Dashboard</h1>
+            <p>Enter WiFi credentials to connect:</p>
+            <input type="text" id="wifiName" placeholder="WiFi Name">
+            <input type="password" id="wifiPassword" placeholder="WiFi Password">
             <button id="connectBtn">Connect</button>
         </div>
     </div>
 
-    <div id="screen2" class="container">
-        <h1>Fish Feeder Dashboard</h1>
-        <div id="lcd">LCD Display</div>
-        <div class="buttons">
-            <button id="manualFeedBtn">Feed Now</button>
-            <button id="autoFeedBtn">Toggle Auto Mode</button>
-        </div>
-        <div id="time-picker">
-            <h2>Set Feeding Schedule</h2>
-            <label for="time1">Time 1</label>
-            <input type="time" id="time1" value="08:00">
-            <label for="time2">Time 2</label>
-            <input type="time" id="time2" value="12:00">
-            <label for="time3">Time 3</label>
-            <input type="time" id="time3" value="17:00">
-            <button id="setScheduleBtn">Set Schedule</button>
-        </div>
-        <div class="buttons">
-            <button id="exitBtn">Exit</button>
-        </div>
-        <div id="background-upload">
-            <h2>Change Background</h2>
-            <input type="file" id="backgroundPicker" accept="image/*">
+    <!-- Screen 2: Dashboard -->
+    <div id="screen2" class="screen">
+        <div>
+            <h1>Control Dashboard</h1>
+            <div id="lcd">Virtual OLED Display</div>
+            <button id="manualControl">Manual Feed</button>
+            <button id="autoControl">Automatic Feed</button>
+            
+            <div class="time-picker">
+                <h2>Set Feeding Schedule</h2>
+                <label>Time 1: <input type="time" id="time1" value="08:00"></label>
+                <label>Time 2: <input type="time" id="time2" value="12:00"></label>
+                <label>Time 3: <input type="time" id="time3" value="17:00"></label>
+                <button id="updateSchedule">Update Schedule</button>
+            </div>
+            <button class="exit-btn" id="exitBtn">Exit</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Mengatur URL broker dan kredensial menggunakan MQTT HiveMQ Cloud (WSS)
+        const brokerUrl = 'wss://8cb15def763044589905db3abee4c47d.s1.eu.hivemq.cloud:8884/mqtt'; 
+        const clientId = 'web_dashboard_client';
+        const username = 'hivemq.webclient.1737922294562';
+        const password = 'r3z:qeG1DV$ab09MQ*;P';
+
+        let client;
+
+        // Navigasi antar layar
+        const screen1 = document.getElementById('screen1');
+        const screen2 = document.getElementById('screen2');
+
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            const wifiName = document.getElementById('wifiName').value;
+            const wifiPassword = document.getElementById('wifiPassword').value;
+
+            if (wifiName && wifiPassword) {
+                connectMQTT();
+                screen1.classList.remove('active');
+                screen2.classList.add('active');
+            } else {
+                alert('Please enter WiFi credentials!');
+            }
+        });
+
+        document.getElementById('exitBtn').addEventListener('click', () => {
+            screen2.classList.remove('active');
+            screen1.classList.add('active');
+        });
+
+        // Fungsi untuk koneksi MQTT
+        function connectMQTT() {
+            client = mqtt.connect(brokerUrl, {
+                clientId: clientId,
+                username: username,
+                password: password,
+                clean: true,
+                reconnectPeriod: 1000
+            });
+
+            client.on('connect', () => {
+                console.log('Connected to MQTT Broker');
+                client.subscribe('servo/control', { qos: 1 });
+                client.subscribe('servo/schedule', { qos: 1 });
+                document.getElementById('lcd').innerText = 'Connected to MQTT';
+            });
+
+            client.on('message', (topic, message) => {
+                console.log('Message received:', topic, message.toString());
+                document.getElementById('lcd').innerText = `Topic: ${topic}\nMessage: ${message}`;
+            });
+        }
+
+        // Manual control
+        document.getElementById('manualControl').addEventListener('click', () => {
+            client.publish('servo/control', 'ON', { qos: 1 });
+            document.getElementById('lcd').innerText = 'Manual Feed Activated';
+        });
+
+        // Automatic control
+        document.getElementById('autoControl').addEventListener('click', () => {
+            client.publish('servo/control', 'AUTO', { qos: 1 });
+            document.getElementById('lcd').innerText = 'Automatic Feed Activated';
+        });
+
+        // Update feeding schedule
+        document.getElementById('updateSchedule').addEventListener('click', () => {
+            const schedule = {
+                schedule: [
+                    document.getElementById('time1').value,
+                    document.getElementById('time2').value,
+                    document.getElementById('time3').value
+                ]
+            };
+            client.publish('servo/schedule', JSON.stringify(schedule), { qos: 1 });
+            document.getElementById('lcd').innerText = 'Schedule Updated';
+        });
+    </script>
+
 </body>
 </html>
