@@ -53,7 +53,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- Screen 1: Login Wi-Fi -->
+    <!-- Screen 1 -->
     <div class="screen active" id="screen1">
       <h1>Connect to Wi-Fi</h1>
       <input type="text" id="ssid" placeholder="Wi-Fi Name (SSID)" />
@@ -61,7 +61,7 @@
       <button onclick="connectWifi()">Connect</button>
     </div>
 
-    <!-- Screen 2: Dashboard -->
+    <!-- Screen 2 -->
     <div class="screen" id="screen2">
       <h1>Fish Feeder Dashboard</h1>
       <div class="lcd" id="lcd">
@@ -81,20 +81,18 @@
   </div>
 
   <script>
-    const NODEMCU_IP = "http://esp8266.local"; // Gunakan mDNS agar otomatis tanpa IP manual
-
-    // Fungsi untuk koneksi ke Wi-Fi dari web dashboard
+    // Handle Wi-Fi connection
     function connectWifi() {
       const ssid = document.getElementById('ssid').value;
       const password = document.getElementById('password').value;
 
-      fetch(`${NODEMCU_IP}/connect`, {
+      fetch('/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ssid, password }),
       })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success) {
           document.getElementById('screen1').classList.remove('active');
           document.getElementById('screen2').classList.add('active');
@@ -102,40 +100,35 @@
         } else {
           alert('Connection failed. Try again.');
         }
-      })
-      .catch(() => alert('Error connecting to NodeMCU!'));
+      });
     }
 
-    // Fungsi untuk memperbarui tampilan LCD virtual
+    // Update LCD
     function updateLCD(status, nextFeed) {
       const lcd = document.getElementById('lcd');
       lcd.innerHTML = `<p>Status: ${status}</p><p>Next Feed: ${nextFeed}</p>`;
     }
 
-    // Fungsi untuk mengatur mode manual atau otomatis
+    // Set mode (manual or auto)
     function setMode(mode) {
-      fetch(`${NODEMCU_IP}/setMode`, {
+      fetch('/setMode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode }),
-      })
-      .then(() => alert(`${mode} mode set`))
-      .catch(() => alert('Error setting mode!'));
+      }).then(() => alert(`${mode} mode set`));
     }
 
-    // Fungsi untuk mengatur jadwal pemberian makan ikan
+    // Set feeding schedule
     function setSchedule() {
       const schedule = document.getElementById('schedule').value;
-      fetch(`${NODEMCU_IP}/setSchedule`, {
+      fetch('/setSchedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ schedule }),
-      })
-      .then(() => updateLCD('Connected', schedule + ':00'))
-      .catch(() => alert('Error setting schedule!'));
+      }).then(() => updateLCD('Connected', schedule + ':00'));
     }
 
-    // Fungsi keluar dari dashboard kembali ke login Wi-Fi
+    // Exit
     function exit() {
       document.getElementById('screen1').classList.add('active');
       document.getElementById('screen2').classList.remove('active');
