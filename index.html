@@ -1,138 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PAKAN IKAN OTOMATIS</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: linear-gradient(90deg, #ffffff, #1a237e);
-      color: #000;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-      padding: 20px;
-      text-align: center;
-    }
-    h1 {
-      color: #1a237e;
-    }
-    .screen {
-      display: none;
-    }
-    .screen.active {
-      display: block;
-    }
-    input, button, select {
-      margin: 10px 0;
-      padding: 10px;
-      width: 100%;
-      max-width: 300px;
-      border: none;
-      border-radius: 5px;
-    }
-    button {
-      background-color: #1a237e;
-      color: #fff;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #3949ab;
-    }
-    .lcd {
-      border: 2px solid #1a237e;
-      background: #e8eaf6;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Fish Feeder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            background-color: #0066cc;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #005bb5;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .time-picker {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Screen 1 -->
-    <div class="screen active" id="screen1">
-      <h1>Connect to Wi-Fi</h1>
-      <input type="text" id="ssid" placeholder="Wi-Fi Name (SSID)" />
-      <input type="password" id="password" placeholder="Wi-Fi Password" />
-      <button onclick="connectWifi()">Connect</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>Automated Fish Feeder</h1>
+            <p>Enter Wi-Fi credentials to connect</p>
+        </div>
+
+        <div id="screen-1">
+            <div class="input-group">
+                <label for="wifi-username">Wi-Fi Username:</label>
+                <input type="text" id="wifi-username" placeholder="Enter Wi-Fi Username">
+            </div>
+            <div class="input-group">
+                <label for="wifi-password">Wi-Fi Password:</label>
+                <input type="password" id="wifi-password" placeholder="Enter Wi-Fi Password">
+            </div>
+            <button class="button" id="connect-btn">Connect to Wi-Fi</button>
+        </div>
+
+        <div id="screen-2" style="display:none;">
+            <h2>Control Dashboard</h2>
+
+            <div>
+                <label for="time-picker">Select Feeding Times:</label>
+                <select id="time-picker" class="time-picker" multiple>
+                    <option value="08:00">08:00 AM</option>
+                    <option value="12:00">12:00 PM</option>
+                    <option value="17:00">05:00 PM</option>
+                </select>
+            </div>
+
+            <button class="button" id="manual-feed">Feed Now</button>
+            <button class="button" id="automatic-feed">Set Auto Feed</button>
+            <button class="button" id="exit-btn">Exit</button>
+        </div>
+
+        <div id="error-message" class="error"></div>
     </div>
 
-    <!-- Screen 2 -->
-    <div class="screen" id="screen2">
-      <h1>Fish Feeder Dashboard</h1>
-      <div class="lcd" id="lcd">
-        <p>Status: Disconnected</p>
-        <p>Next Feed: -</p>
-      </div>
-      <button onclick="setMode('manual')">Manual Feed</button>
-      <button onclick="setMode('auto')">Automatic Feed</button>
-      <select id="schedule">
-        <option value="8">08:00</option>
-        <option value="12">12:00</option>
-        <option value="17">17:00</option>
-      </select>
-      <button onclick="setSchedule()">Set Schedule</button>
-      <button onclick="exit()">Exit</button>
-    </div>
-  </div>
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
 
-  <script>
-    // Handle Wi-Fi connection
-    function connectWifi() {
-      const ssid = document.getElementById('ssid').value;
-      const password = document.getElementById('password').value;
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBakbDeDpJlG4YVHdqdXGrvQRlLOkmb78I",
+            authDomain: "fedeerapp-6d328.firebaseapp.com",
+            databaseURL: "https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "fedeerapp-6d328",
+            storageBucket: "fedeerapp-6d328.firebasestorage.app",
+            messagingSenderId: "222072627019",
+            appId: "1:222072627019:web:abb48675675f86af6052ce"
+        };
 
-      fetch('/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ssid, password }),
-      })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          document.getElementById('screen1').classList.remove('active');
-          document.getElementById('screen2').classList.add('active');
-          updateLCD('Connected', '-');
-        } else {
-          alert('Connection failed. Try again.');
-        }
-      });
-    }
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const database = getDatabase(app);
 
-    // Update LCD
-    function updateLCD(status, nextFeed) {
-      const lcd = document.getElementById('lcd');
-      lcd.innerHTML = `<p>Status: ${status}</p><p>Next Feed: ${nextFeed}</p>`;
-    }
+        // Handle Wi-Fi Connection Form (Screen 1)
+        const connectBtn = document.getElementById("connect-btn");
+        const wifiUsernameInput = document.getElementById("wifi-username");
+        const wifiPasswordInput = document.getElementById("wifi-password");
+        const errorMessage = document.getElementById("error-message");
 
-    // Set mode (manual or auto)
-    function setMode(mode) {
-      fetch('/setMode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode }),
-      }).then(() => alert(`${mode} mode set`));
-    }
+        connectBtn.addEventListener("click", function() {
+            const wifiUsername = wifiUsernameInput.value;
+            const wifiPassword = wifiPasswordInput.value;
 
-    // Set feeding schedule
-    function setSchedule() {
-      const schedule = document.getElementById('schedule').value;
-      fetch('/setSchedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ schedule }),
-      }).then(() => updateLCD('Connected', schedule + ':00'));
-    }
+            if (wifiUsername && wifiPassword) {
+                // Simulate Wi-Fi connection (in reality, NodeMCU would handle this)
+                console.log(`Connecting to Wi-Fi: ${wifiUsername}`);
+                // Switch to Screen 2 after successful Wi-Fi connection
+                document.getElementById("screen-1").style.display = "none";
+                document.getElementById("screen-2").style.display = "block";
 
-    // Exit
-    function exit() {
-      document.getElementById('screen1').classList.add('active');
-      document.getElementById('screen2').classList.remove('active');
-    }
-  </script>
+                // Save Wi-Fi credentials to Firebase (for tracking)
+                const dbRef = ref(database, 'wifi/');
+                set(dbRef, {
+                    username: wifiUsername,
+                    password: wifiPassword
+                }).then(() => {
+                    console.log("Wi-Fi credentials saved to Firebase");
+                }).catch(error => {
+                    errorMessage.textContent = `Error saving Wi-Fi credentials: ${error.message}`;
+                });
+            } else {
+                errorMessage.textContent = "Please enter both Wi-Fi username and password.";
+            }
+        });
+
+        // Handle Feeding Schedule and Control (Screen 2)
+        const timePicker = document.getElementById("time-picker");
+        const manualFeedBtn = document.getElementById("manual-feed");
+        const automaticFeedBtn = document.getElementById("automatic-feed");
+        const exitBtn = document.getElementById("exit-btn");
+
+        manualFeedBtn.addEventListener("click", function() {
+            const feedingTimes = Array.from(timePicker.selectedOptions).map(option => option.value);
+            console.log("Manual Feeding at:", feedingTimes);
+            // Save feeding schedule to Firebase
+            const scheduleRef = ref(database, 'schedule/');
+            set(scheduleRef, {
+                feedingTimes: feedingTimes
+            }).then(() => {
+                console.log("Feeding schedule saved to Firebase");
+            }).catch(error => {
+                console.error("Error saving feeding schedule:", error.message);
+            });
+        });
+
+        automaticFeedBtn.addEventListener("click", function() {
+            const feedingTimes = Array.from(timePicker.selectedOptions).map(option => option.value);
+            console.log("Auto Feeding at:", feedingTimes);
+            // Here you can add code to control servo or other devices connected to NodeMCU
+        });
+
+        exitBtn.addEventListener("click", function() {
+            // Exit to Screen 1
+            document.getElementById("screen-2").style.display = "none";
+            document.getElementById("screen-1").style.display = "block";
+        });
+
+    </script>
 </body>
 </html>
