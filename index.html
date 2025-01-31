@@ -7,80 +7,131 @@
     <style>
         body { background-color: navy; color: white; text-align: center; font-family: Arial; }
         input, button { margin: 5px; padding: 10px; }
+        .lcd { background-color: #000; color: #0f0; font-size: 18px; margin: 10px auto; padding: 15px; width: 90%; max-width: 300px; }
         #screen2 { display: none; }
+        button { cursor: pointer; }
+        button:active { background-color: darkblue; }
+        .blue-btn { background-color: #001f3d; color: white; }
+        .red-btn { background-color: red; color: black; }
     </style>
 </head>
 <body>
+    <!-- Screen 1: Input WiFi Credentials -->
     <div id="screen1">
         <h2>Masukkan WiFi</h2>
         <input type="text" id="ssid" placeholder="SSID WiFi">
         <input type="password" id="password" placeholder="Password WiFi">
-        <button onclick="connectWiFi()">Konek</button>
+        <button class="blue-btn" onclick="connectWiFi()">Konek</button>
     </div>
 
+    <!-- Screen 2: Main Dashboard -->
     <div id="screen2">
         <h2>Fish Feeder</h2>
-        <div id="status">Status: Offline</div>
-        <button onclick="servoManual()">Manual</button>
-        <button onclick="servoAuto()">Otomatis</button>
+        <!-- LCD Virtual Display -->
+        <div class="lcd" id="status">Status: Offline</div>
 
-        <!-- Time Picker untuk setidaknya 3 jadwal pemberian pakan -->
+        <!-- Servo Control -->
+        <button class="blue-btn" onclick="servoManual()">Manual</button>
+        <button class="blue-btn" onclick="servoAuto()">Otomatis</button>
+
+        <!-- Feeding Schedule -->
         <div>
-            <label for="timePicker1">Jadwal Pakan 1:</label>
+            <h3>Atur Jadwal Pakan</h3>
             <input type="time" id="timePicker1">
-        </div>
-        <div>
-            <label for="timePicker2">Jadwal Pakan 2:</label>
             <input type="time" id="timePicker2">
-        </div>
-        <div>
-            <label for="timePicker3">Jadwal Pakan 3:</label>
             <input type="time" id="timePicker3">
+            <button class="blue-btn" onclick="setSchedule()">Atur Jadwal</button>
         </div>
 
-        <button onclick="setSchedule()">Atur Jadwal</button>
-        <button onclick="exitApp()">Keluar</button>
+        <!-- Exit Button -->
+        <button class="red-btn" onclick="exitApp()">Keluar</button>
     </div>
 
     <script>
+        let isWiFiConnected = false;
+        let servoMode = "off";
+        let schedule = [];
+
+        // Update LCD status
+        function updateLCD() {
+            const statusElement = document.getElementById('status');
+            
+            // Update WiFi status
+            if (!isWiFiConnected) {
+                statusElement.innerHTML = "Status: Offline";
+            } else {
+                statusElement.innerHTML = "Status: Connected";
+            }
+
+            // Update Servo Mode
+            if (servoMode === "manual") {
+                statusElement.innerHTML += "<br>Servo: Manual Mode";
+            } else if (servoMode === "auto") {
+                statusElement.innerHTML += "<br>Servo: Automatic Mode";
+            }
+
+            // Update Feeding Schedule
+            if (schedule.length > 0) {
+                statusElement.innerHTML += `<br>Jadwal Pakan: ${schedule.join(', ')}`;
+            }
+        }
+
+        // Function to connect to WiFi
         function connectWiFi() {
             let ssid = document.getElementById('ssid').value;
             let password = document.getElementById('password').value;
+
+            // Save WiFi credentials to Firebase
             fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/wifi.json', {
                 method: 'PUT',
                 body: JSON.stringify({ ssid, password }),
                 headers: { 'Content-Type': 'application/json' }
             }).then(() => {
+                isWiFiConnected = true;
+                updateLCD(); // Update LCD after WiFi connection
                 document.getElementById('screen1').style.display = 'none';
                 document.getElementById('screen2').style.display = 'block';
             });
         }
 
+        // Function to control servo manually
         function servoManual() {
             fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/servo.json', {
                 method: 'PUT',
-                body: JSON.stringify({ mode: "manual", status: "on" })
+                body: JSON.stringify({ mode: "manual", status: "on" }),
+                headers: { 'Content-Type': 'application/json' }
+            }).then(() => {
+                servoMode = "manual";
+                updateLCD(); // Update LCD after servo mode change
             });
         }
 
+        // Function to control servo automatically
         function servoAuto() {
             fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/servo.json', {
                 method: 'PUT',
-                body: JSON.stringify({ mode: "auto" })
+                body: JSON.stringify({ mode: "auto" }),
+                headers: { 'Content-Type': 'application/json' }
+            }).then(() => {
+                servoMode = "auto";
+                updateLCD(); // Update LCD after servo mode change
             });
         }
 
+        // Function to set feeding schedule
         function setSchedule() {
             let time1 = document.getElementById('timePicker1').value;
             let time2 = document.getElementById('timePicker2').value;
             let time3 = document.getElementById('timePicker3').value;
-
-            // Mengirimkan jadwal pemberian pakan ke Firebase
+            
+            // Save schedule to Firebase
             fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/schedule.json', {
                 method: 'PUT',
                 body: JSON.stringify([time1, time2, time3]),
                 headers: { 'Content-Type': 'application/json' }
             }).then(() => {
+                schedule = [time1, time2, time3];
+                updateLCD(); // Update LCD after schedule is set
                 alert("Jadwal pakan berhasil diatur!");
             }).catch((error) => {
                 console.error("Error:", error);
@@ -88,9 +139,13 @@
             });
         }
 
+        // Function to reload the page when exiting
         function exitApp() {
             window.location.reload();
         }
+
+        // Initialize LCD display on page load
+        window.onload = updateLCD;
     </script>
 </body>
 </html>
