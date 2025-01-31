@@ -6,7 +6,7 @@
     <title>Fish Feeder Dashboard</title>
     <style>
         body {
-            background-color: #ffffff;
+            background: linear-gradient(to bottom, #003366, #ffffff); /* Perpaduan biru navy dan putih */
             color: #000;
             font-family: Arial, sans-serif;
             text-align: center;
@@ -97,6 +97,15 @@
             max-width: 400px;
             margin: 0 auto;
         }
+
+        #change-background {
+            margin-top: 20px;
+            background-color: #003366;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -130,7 +139,12 @@
         
         <!-- Exit Button -->
         <button class="red-btn" onclick="exitApp()">Keluar</button>
+
+        <!-- Button to change background -->
+        <button id="change-background" onclick="changeBackground()">Ganti Background</button>
     </div>
+
+    <input type="file" id="fileInput" style="display: none;" accept="image/*" onchange="setBackgroundFromFile(event)">
 
     <script>
         // Initialize Firebase
@@ -223,6 +237,24 @@
         // Function to exit the app
         function exitApp() {
             window.location.reload();
+        }
+
+        // Function to change background
+        function changeBackground() {
+            document.getElementById('fileInput').click();
+        }
+
+        // Function to set background from file input
+        function setBackgroundFromFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    document.body.style.backgroundImage = `url(${reader.result})`;
+                    document.body.style.backgroundSize = 'cover';
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         // Initialize LCD display on page load
