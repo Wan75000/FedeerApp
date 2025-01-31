@@ -1,119 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automated Fish Feeder</title>
+    <title>Fish Feeder Dashboard</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: white;
-            color: #333;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .button {
-            background-color: #0066cc;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .button:hover {
-            background-color: #005bb5;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        .input-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-
-        .time-picker {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-
-        .error {
-            color: red;
-        }
+        body { background-color: navy; color: white; text-align: center; font-family: Arial; }
+        input, button { margin: 5px; padding: 10px; }
+        #screen2 { display: none; }
     </style>
-</head>
-<body>
-
-    <div class="container">
-        <div class="header">
-            <h1>Automated Fish Feeder</h1>
-            <p>Enter Wi-Fi credentials to connect</p>
-        </div>
-
-        <div id="screen-1">
-            <div class="input-group">
-                <label for="wifi-username">Wi-Fi Username:</label>
-                <input type="text" id="wifi-username" placeholder="Enter Wi-Fi Username">
-            </div>
-            <div class="input-group">
-                <label for="wifi-password">Wi-Fi Password:</label>
-                <input type="password" id="wifi-password" placeholder="Enter Wi-Fi Password">
-            </div>
-            <button class="button" id="connect-btn">Connect to Wi-Fi</button>
-        </div>
-
-        <div id="screen-2" style="display:none;">
-            <h2>Control Dashboard</h2>
-
-            <div>
-                <label for="time-picker">Select Feeding Times:</label>
-                <select id="time-picker" class="time-picker" multiple>
-                    <option value="08:00">08:00 AM</option>
-                    <option value="12:00">12:00 PM</option>
-                    <option value="17:00">05:00 PM</option>
-                </select>
-            </div>
-
-            <button class="button" id="manual-feed">Feed Now</button>
-            <button class="button" id="automatic-feed">Set Auto Feed</button>
-            <button class="button" id="exit-btn">Exit</button>
-        </div>
-
-        <div id="error-message" class="error"></div>
-    </div>
-
-    <!-- Firebase SDK -->
     <script type="module">
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
-
-        // Firebase Configuration
+        
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBakbDeDpJlG4YVHdqdXGrvQRlLOkmb78I",
             authDomain: "fedeerapp-6d328.firebaseapp.com",
@@ -126,73 +28,83 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
-        const database = getDatabase(app);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+    </script>
+</head>
+<body>
+    <div id="screen1">
+        <h2>Masukkan WiFi</h2>
+        <input type="text" id="ssid" placeholder="SSID WiFi">
+        <input type="password" id="password" placeholder="Password WiFi">
+        <button onclick="connectWiFi()">Konek</button>
+    </div>
 
-        // Handle Wi-Fi Connection Form (Screen 1)
-        const connectBtn = document.getElementById("connect-btn");
-        const wifiUsernameInput = document.getElementById("wifi-username");
-        const wifiPasswordInput = document.getElementById("wifi-password");
-        const errorMessage = document.getElementById("error-message");
+    <div id="screen2">
+        <h2>Fish Feeder</h2>
+        <div id="status">Status: Offline</div>
+        <button onclick="servoManual()">Manual</button>
+        <button onclick="servoAuto()">Otomatis</button>
+        <input type="time" id="timePicker">
+        <button onclick="setSchedule()">Atur Jadwal</button>
+        <button onclick="exitApp()">Keluar</button>
+    </div>
 
-        connectBtn.addEventListener("click", function() {
-            const wifiUsername = wifiUsernameInput.value;
-            const wifiPassword = wifiPasswordInput.value;
-
-            if (wifiUsername && wifiPassword) {
-                // Simulate Wi-Fi connection (in reality, NodeMCU would handle this)
-                console.log(`Connecting to Wi-Fi: ${wifiUsername}`);
-                // Switch to Screen 2 after successful Wi-Fi connection
-                document.getElementById("screen-1").style.display = "none";
-                document.getElementById("screen-2").style.display = "block";
-
-                // Save Wi-Fi credentials to Firebase (for tracking)
-                const dbRef = ref(database, 'wifi/');
-                set(dbRef, {
-                    username: wifiUsername,
-                    password: wifiPassword
-                }).then(() => {
-                    console.log("Wi-Fi credentials saved to Firebase");
-                }).catch(error => {
-                    errorMessage.textContent = `Error saving Wi-Fi credentials: ${error.message}`;
-                });
-            } else {
-                errorMessage.textContent = "Please enter both Wi-Fi username and password.";
-            }
-        });
-
-        // Handle Feeding Schedule and Control (Screen 2)
-        const timePicker = document.getElementById("time-picker");
-        const manualFeedBtn = document.getElementById("manual-feed");
-        const automaticFeedBtn = document.getElementById("automatic-feed");
-        const exitBtn = document.getElementById("exit-btn");
-
-        manualFeedBtn.addEventListener("click", function() {
-            const feedingTimes = Array.from(timePicker.selectedOptions).map(option => option.value);
-            console.log("Manual Feeding at:", feedingTimes);
-            // Save feeding schedule to Firebase
-            const scheduleRef = ref(database, 'schedule/');
-            set(scheduleRef, {
-                feedingTimes: feedingTimes
+    <script>
+        // Function for Wi-Fi connection
+        function connectWiFi() {
+            let ssid = document.getElementById('ssid').value;
+            let password = document.getElementById('password').value;
+            set(ref(db, 'wifi/'), {
+                ssid: ssid,
+                password: password
             }).then(() => {
-                console.log("Feeding schedule saved to Firebase");
+                document.getElementById('screen1').style.display = 'none';
+                document.getElementById('screen2').style.display = 'block';
             }).catch(error => {
-                console.error("Error saving feeding schedule:", error.message);
+                console.error("Error saving WiFi credentials:", error);
             });
-        });
+        }
 
-        automaticFeedBtn.addEventListener("click", function() {
-            const feedingTimes = Array.from(timePicker.selectedOptions).map(option => option.value);
-            console.log("Auto Feeding at:", feedingTimes);
-            // Here you can add code to control servo or other devices connected to NodeMCU
-        });
+        // Function to control the servo manually
+        function servoManual() {
+            set(ref(db, 'servo/'), {
+                mode: "manual",
+                status: "on"
+            }).then(() => {
+                console.log("Servo in manual mode");
+            }).catch(error => {
+                console.error("Error controlling servo:", error);
+            });
+        }
 
-        exitBtn.addEventListener("click", function() {
-            // Exit to Screen 1
-            document.getElementById("screen-2").style.display = "none";
-            document.getElementById("screen-1").style.display = "block";
-        });
+        // Function to control the servo automatically
+        function servoAuto() {
+            set(ref(db, 'servo/'), {
+                mode: "auto"
+            }).then(() => {
+                console.log("Servo in auto mode");
+            }).catch(error => {
+                console.error("Error controlling servo:", error);
+            });
+        }
 
+        // Function to set the feeding schedule
+        function setSchedule() {
+            let time = document.getElementById('timePicker').value;
+            set(ref(db, 'schedule/'), {
+                feedingTimes: [time]
+            }).then(() => {
+                console.log("Feeding schedule set to:", time);
+            }).catch(error => {
+                console.error("Error setting feeding schedule:", error);
+            });
+        }
+
+        // Function to exit the app
+        function exitApp() {
+            window.location.reload();
+        }
     </script>
 </body>
 </html>
