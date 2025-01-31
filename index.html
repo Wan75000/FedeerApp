@@ -57,14 +57,14 @@
         }
 
         function servoManual() {
-            fetch('https://your-project-id-default-rtdb.firebaseio.com/servo.json', {
+            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/servo.json', {
                 method: 'PUT',
                 body: JSON.stringify({ mode: "manual", status: "on" })
             });
         }
 
         function servoAuto() {
-            fetch('https://your-project-id-default-rtdb.firebaseio.com/servo.json', {
+            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/servo.json', {
                 method: 'PUT',
                 body: JSON.stringify({ mode: "auto" })
             });
@@ -76,7 +76,7 @@
             let time3 = document.getElementById('timePicker3').value;
 
             // Mengirimkan jadwal pemberian pakan ke Firebase
-            fetch('https://your-project-id-default-rtdb.firebaseio.com/schedule.json', {
+            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/schedule.json', {
                 method: 'PUT',
                 body: JSON.stringify([time1, time2, time3]),
                 headers: { 'Content-Type': 'application/json' }
