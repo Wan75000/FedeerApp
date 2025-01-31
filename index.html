@@ -9,28 +9,6 @@
         input, button { margin: 5px; padding: 10px; }
         #screen2 { display: none; }
     </style>
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js";
-        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-database.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
-        
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBakbDeDpJlG4YVHdqdXGrvQRlLOkmb78I",
-            authDomain: "fedeerapp-6d328.firebaseapp.com",
-            databaseURL: "https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "fedeerapp-6d328",
-            storageBucket: "fedeerapp-6d328.firebasestorage.app",
-            messagingSenderId: "222072627019",
-            appId: "1:222072627019:web:abb48675675f86af6052ce"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-    </script>
 </head>
 <body>
     <div id="screen1">
@@ -45,63 +23,71 @@
         <div id="status">Status: Offline</div>
         <button onclick="servoManual()">Manual</button>
         <button onclick="servoAuto()">Otomatis</button>
-        <input type="time" id="timePicker">
+
+        <!-- Time Picker untuk setidaknya 3 jadwal pemberian pakan -->
+        <div>
+            <label for="timePicker1">Jadwal Pakan 1:</label>
+            <input type="time" id="timePicker1">
+        </div>
+        <div>
+            <label for="timePicker2">Jadwal Pakan 2:</label>
+            <input type="time" id="timePicker2">
+        </div>
+        <div>
+            <label for="timePicker3">Jadwal Pakan 3:</label>
+            <input type="time" id="timePicker3">
+        </div>
+
         <button onclick="setSchedule()">Atur Jadwal</button>
         <button onclick="exitApp()">Keluar</button>
     </div>
 
     <script>
-        // Function for Wi-Fi connection
         function connectWiFi() {
             let ssid = document.getElementById('ssid').value;
             let password = document.getElementById('password').value;
-            set(ref(db, 'wifi/'), {
-                ssid: ssid,
-                password: password
+            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/wifi.json', {
+                method: 'PUT',
+                body: JSON.stringify({ ssid, password }),
+                headers: { 'Content-Type': 'application/json' }
             }).then(() => {
                 document.getElementById('screen1').style.display = 'none';
                 document.getElementById('screen2').style.display = 'block';
-            }).catch(error => {
-                console.error("Error saving WiFi credentials:", error);
             });
         }
 
-        // Function to control the servo manually
         function servoManual() {
-            set(ref(db, 'servo/'), {
-                mode: "manual",
-                status: "on"
-            }).then(() => {
-                console.log("Servo in manual mode");
-            }).catch(error => {
-                console.error("Error controlling servo:", error);
+            fetch('https://your-project-id-default-rtdb.firebaseio.com/servo.json', {
+                method: 'PUT',
+                body: JSON.stringify({ mode: "manual", status: "on" })
             });
         }
 
-        // Function to control the servo automatically
         function servoAuto() {
-            set(ref(db, 'servo/'), {
-                mode: "auto"
-            }).then(() => {
-                console.log("Servo in auto mode");
-            }).catch(error => {
-                console.error("Error controlling servo:", error);
+            fetch('https://your-project-id-default-rtdb.firebaseio.com/servo.json', {
+                method: 'PUT',
+                body: JSON.stringify({ mode: "auto" })
             });
         }
 
-        // Function to set the feeding schedule
         function setSchedule() {
-            let time = document.getElementById('timePicker').value;
-            set(ref(db, 'schedule/'), {
-                feedingTimes: [time]
+            let time1 = document.getElementById('timePicker1').value;
+            let time2 = document.getElementById('timePicker2').value;
+            let time3 = document.getElementById('timePicker3').value;
+
+            // Mengirimkan jadwal pemberian pakan ke Firebase
+            fetch('https://your-project-id-default-rtdb.firebaseio.com/schedule.json', {
+                method: 'PUT',
+                body: JSON.stringify([time1, time2, time3]),
+                headers: { 'Content-Type': 'application/json' }
             }).then(() => {
-                console.log("Feeding schedule set to:", time);
-            }).catch(error => {
-                console.error("Error setting feeding schedule:", error);
+                alert("Jadwal pakan berhasil diatur!");
+            }).catch((error) => {
+                console.error("Error:", error);
+                alert("Terjadi kesalahan saat mengatur jadwal.");
             });
         }
 
-        // Function to exit the app
         function exitApp() {
             window.location.reload();
         }
