@@ -3,264 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fish Feeder Dashboard</title>
+    <title>POS IND INDONESIA</title>
     <style>
         body {
-            background: linear-gradient(to bottom, #003366, #ffffff); /* Perpaduan biru navy dan putih */
-            color: #000;
             font-family: Arial, sans-serif;
-            text-align: center;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
-        }
-
-        h2 {
-            font-size: 24px;
-            color: #000;
-        }
-
-        .container {
-            padding: 20px;
-        }
-
-        input, button {
-            margin: 10px 0;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 5px;
-        }
-
-        input[type="text"], input[type="password"], input[type="time"] {
-            width: 80%;
-            max-width: 250px;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        #screen1 {
-            display: block;
-        }
-
-        #screen2 {
-            display: none;
-        }
-
-        /* Style for screen 1 (WiFi setup) */
-        #screen1 {
-            background-color: #f4f4f4;
-            padding: 40px;
-            border-radius: 10px;
-            width: 300px;
-            margin: 0 auto;
-        }
-
-        /* Style for screen 2 (Feeder control) */
-        #screen2 {
-            background-color: #f4f4f4;
-            padding: 20px;
-            width: 80%;
-            max-width: 400px;
-            margin: 0 auto;
-            border-radius: 10px;
-        }
-
-        .blue-btn {
-            background-color: #003366;
-            color: white;
-        }
-
-        .red-btn {
-            background-color: red;
-            color: black;
-        }
-
-        .time-picker-container {
             display: flex;
             justify-content: center;
-            gap: 10px;
+            align-items: center;
+            height: 100vh;
         }
-
-        .time-picker-container input {
-            width: 60px;
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 420px;
+            text-align: center;
         }
-
-        .lcd {
-            background-color: #000;
-            color: #0f0;
-            padding: 15px;
-            margin: 10px 0;
-            font-size: 18px;
-            border-radius: 5px;
-            width: 90%;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        #change-background {
-            margin-top: 20px;
-            background-color: #003366;
+        .header {
+            background-color: navy;
             color: white;
-            padding: 10px 20px;
-            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px;
+            margin-bottom: 15px;
             border-radius: 5px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+            text-align: left;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: navy;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: darkblue;
+        }
+        .exit {
+            background-color: red;
+        }
+        .exit:hover {
+            background-color: darkred;
+        }
+        .file-input {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <!-- Screen 1: Wi-Fi Setup -->
-    <div id="screen1">
-        <h2>Masukkan WiFi</h2>
-        <input type="text" id="ssid" placeholder="SSID WiFi">
-        <input type="password" id="password" placeholder="Password WiFi">
-        <button class="blue-btn" onclick="connectWiFi()">Konek</button>
-    </div>
 
-    <!-- Screen 2: Feeder Control -->
-    <div id="screen2">
-        <h2>Fish Feeder</h2>
+<div class="container">
+    <div class="header">POS IND INDONESIA</div>
 
-        <!-- LCD Virtual OLED -->
-        <div class="lcd" id="status">Status: Offline</div>
+    <!-- Input Data -->
+    <label for="nomor_kendaraan">N22:</label>
+    <input type="text" id="nomor_kendaraan" placeholder="Masukkan N22">
 
-        <!-- Control Servo -->
-        <button class="blue-btn" onclick="servoManual()">Manual</button>
-        <button class="blue-btn" onclick="servoAuto()">Otomatis</button>
+    <label for="waktu_berangkat">Berangkat Jam:</label>
+    <input type="time" id="waktu_berangkat">
 
-        <!-- Time Picker for Schedule -->
-        <div class="time-picker-container">
-            <input type="time" id="timePicker1">
-            <input type="time" id="timePicker2">
-            <input type="time" id="timePicker3">
-        </div>
+    <label for="nomor_plat">No Plat:</label>
+    <input type="text" id="nomor_plat" placeholder="Masukkan No Plat">
 
-        <button class="blue-btn" onclick="setSchedule()">Atur Jadwal</button>
-        
-        <!-- Exit Button -->
-        <button class="red-btn" onclick="exitApp()">Keluar</button>
+    <!-- Kantor Asal -->
+    <label for="kantor_asal">Kantor Asal:</label>
+    <select id="kantor_asal">
+        <option value="KC SMR 75000">KC SMR 75000</option>
+        <option value="KC BOT 75300">KC BOT 75300</option>
+        <option value="KCU BPP 76100">KCU BPP 76100</option>
+        <option value="KC TNR 77300">KC TNR 77300</option>
+        <option value="KC TSE 77000">KC TSE 77000</option>
+        <option value="KC TRG 75500">KC TRG 75500</option>
+        <option value="SPP BJM 70400">SPP BJM 70400</option>
+    </select>
 
-        <!-- Button to change background -->
-        <button id="change-background" onclick="changeBackground()">Ganti Background</button>
-    </div>
+    <!-- Kantor Tujuan 1 -->
+    <label for="kantor_tujuan1">Kantor Tujuan 1:</label>
+    <select id="kantor_tujuan1">
+        <option value="KC SMR 75000">KC SMR 75000</option>
+        <option value="KC BOT 75300">KC BOT 75300</option>
+        <option value="KCU BPP 76100">KCU BPP 76100</option>
+        <option value="KC TNR 77300">KC TNR 77300</option>
+        <option value="KC TSE 77000">KC TSE 77000</option>
+        <option value="KC TRG 75500">KC TRG 75500</option>
+        <option value="SPP BJM 70400">SPP BJM 70400</option>
+    </select>
+    <input type="number" id="jumlah_kantong1" min="1" placeholder="Jumlah Kantong">
 
-    <input type="file" id="fileInput" style="display: none;" accept="image/*" onchange="setBackgroundFromFile(event)">
+    <!-- Kantor Tujuan 2 -->
+    <label for="kantor_tujuan2">Kantor Tujuan 2:</label>
+    <select id="kantor_tujuan2">
+        <option value="KC SMR 75000">KC SMR 75000</option>
+        <option value="KC BOT 75300">KC BOT 75300</option>
+        <option value="KCU BPP 76100">KCU BPP 76100</option>
+        <option value="KC TNR 77300">KC TNR 77300</option>
+        <option value="KC TSE 77000">KC TSE 77000</option>
+        <option value="KC TRG 75500">KC TRG 75500</option>
+        <option value="SPP BJM 70400">SPP BJM 70400</option>
+    </select>
+    <input type="number" id="jumlah_kantong2" min="1" placeholder="Jumlah Kantong">
 
-    <script>
-        // Initialize Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyBakbDeDpJlG4YVHdqdXGrvQRlLOkmb78I",
-            authDomain: "fedeerapp-6d328.firebaseapp.com",
-            databaseURL: "https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "fedeerapp-6d328",
-            storageBucket: "fedeerapp-6d328.firebasestorage.app",
-            messagingSenderId: "222072627019",
-            appId: "1:222072627019:web:abb48675675f86af6052ce"
-        };
+    <!-- Upload Photo -->
+    <label for="photoUpload">Upload Photo:</label>
+    <input type="file" id="photoUpload" class="file-input" accept="image/*" multiple>
 
-        const app = initializeApp(firebaseConfig);
+    <button onclick="kirimKeTelegram()">KIRIM</button>
+    <button class="exit" onclick="window.close()">KELUAR</button>
+</div>
 
-        // Update the LCD display
-        function updateLCD(status, servoMode, schedule) {
-            const statusElement = document.getElementById('status');
-            
-            let statusMessage = `Status: ${status}`;
-            if (servoMode) {
-                statusMessage += `<br>Servo: ${servoMode}`;
-            }
-            if (schedule.length > 0) {
-                statusMessage += `<br>Jadwal Pakan: ${schedule.join(', ')}`;
-            }
-            statusElement.innerHTML = statusMessage;
-        }
+<script>
+    function kirimKeTelegram() {
+        let token = "8121564417:AAEtuNjpJq8BFDI-iYhiXLadlTYbcPsfnws";
+        let chatId = "-4643025711";
 
-        // Function to connect to WiFi
-        function connectWiFi() {
-            let ssid = document.getElementById('ssid').value;
-            let password = document.getElementById('password').value;
+        let nomorKendaraan = document.getElementById("nomor_kendaraan").value;
+        let waktuBerangkat = document.getElementById("waktu_berangkat").value;
+        let nomorPlat = document.getElementById("nomor_plat").value;
+        let kantorAsal = document.getElementById("kantor_asal").value;
+        let kantorTujuan1 = document.getElementById("kantor_tujuan1").value;
+        let jumlahKantong1 = document.getElementById("jumlah_kantong1").value;
+        let kantorTujuan2 = document.getElementById("kantor_tujuan2").value;
+        let jumlahKantong2 = document.getElementById("jumlah_kantong2").value;
+        let photoUpload = document.getElementById("photoUpload").files;
 
-            // Save WiFi credentials to Firebase
-            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/wifi.json', {
-                method: 'PUT',
-                body: JSON.stringify({ ssid, password }),
-                headers: { 'Content-Type': 'application/json' }
-            }).then(() => {
-                // Update LCD and show status on screen 2
-                updateLCD('Connected', 'N/A', []);
-                document.getElementById('screen1').style.display = 'none';
-                document.getElementById('screen2').style.display = 'block';
+        let pesan = `🏁🏁🏁 ARPOS 🏁🏁🏁\n<RUTE ${kantorAsal} - ${kantorTujuan1} - ${kantorTujuan2}>\n\n`;
+        pesan += `▫️ N22.                    ➡️ ${nomorKendaraan}\n`;
+        pesan += `▫️ Berangkat jam          ➡️ ${waktuBerangkat}\n`;
+        pesan += `▫️ No plat                ➡️ ${nomorPlat}\n\n`;
+        pesan += `▫️ Jumlah kantong ⤵️\n  ${kantorTujuan1}  "${jumlahKantong1}" Ktg\n  ${kantorTujuan2}  "${jumlahKantong2}" Ktg\n`;
+        pesan += `"TERIMA KASIH"..!!🙏🙏🙏`;
+
+        // Send text message
+        let url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(pesan)}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(() => {
+                alert("Pesan berhasil dikirim!");
+            })
+            .catch(() => {
+                alert("Gagal mengirim pesan!");
+            });
+
+        // Handle photo upload
+        if (photoUpload.length > 0) {
+            Array.from(photoUpload).forEach((photo) => {
+                let formData = new FormData();
+                formData.append("photo", photo);
+
+                let photoUrl = `https://api.telegram.org/bot${token}/sendPhoto?chat_id=${chatId}`;
+                fetch(photoUrl, {
+                    method: "POST",
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        alert("Foto berhasil diupload!");
+                    })
+                    .catch(() => {
+                        alert("Gagal mengupload foto!");
+                    });
             });
         }
+    }
+</script>
 
-        // Function to control servo manually
-        function servoManual() {
-            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/servo.json', {
-                method: 'PUT',
-                body: JSON.stringify({ mode: "manual", status: "on" }),
-                headers: { 'Content-Type': 'application/json' }
-            }).then(() => {
-                updateLCD('Connected', 'Manual', []);
-            });
-        }
-
-        // Function to control servo automatically
-        function servoAuto() {
-            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/servo.json', {
-                method: 'PUT',
-                body: JSON.stringify({ mode: "auto" }),
-                headers: { 'Content-Type': 'application/json' }
-            }).then(() => {
-                updateLCD('Connected', 'Automatic', []);
-            });
-        }
-
-        // Function to set feeding schedule
-        function setSchedule() {
-            let time1 = document.getElementById('timePicker1').value;
-            let time2 = document.getElementById('timePicker2').value;
-            let time3 = document.getElementById('timePicker3').value;
-            let schedule = [time1, time2, time3];
-
-            fetch('https://fedeerapp-6d328-default-rtdb.asia-southeast1.firebasedatabase.app/schedule.json', {
-                method: 'PUT',
-                body: JSON.stringify(schedule),
-                headers: { 'Content-Type': 'application/json' }
-            }).then(() => {
-                updateLCD('Connected', 'N/A', schedule);
-                alert("Jadwal pakan berhasil diatur!");
-            }).catch((error) => {
-                console.error("Error:", error);
-                alert("Terjadi kesalahan saat mengatur jadwal.");
-            });
-        }
-
-        // Function to exit the app
-        function exitApp() {
-            window.location.reload();
-        }
-
-        // Function to change background
-        function changeBackground() {
-            document.getElementById('fileInput').click();
-        }
-
-        // Function to set background from file input
-        function setBackgroundFromFile(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function() {
-                    document.body.style.backgroundImage = `url(${reader.result})`;
-                    document.body.style.backgroundSize = 'cover';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // Initialize LCD display on page load
-        window.onload = () => {
-            updateLCD('Offline', 'N/A', []);
-        };
-    </script>
 </body>
 </html>
